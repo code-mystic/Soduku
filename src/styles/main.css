@@ -6,6 +6,8 @@ body {
 .row {
     /* border: 1px solid #333; */
     margin: 0px;
+    max-height: 40px;
+    display: flex;
 }
 
 .top_row {
@@ -20,12 +22,17 @@ body {
     border-left: 1px solid #999;
     border-top: 1px solid #999;
     display: inline-block;
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     padding: 5px;
     margin: 0px;
+    line-height: 24px;
     text-align: center;
     justify-content: center;
+}
+
+.empty-cell {
+    background-color: white;
 }
 
 .left-cell {

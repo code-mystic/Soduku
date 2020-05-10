@@ -1,3 +1,5 @@
+
+
 function createElem (type = "div", attr_list = []) {
     let row_elem = document.createElement(type)
 
@@ -6,12 +8,6 @@ function createElem (type = "div", attr_list = []) {
             let prop = row_elem.setAttribute(attr.type, attr.value)
         });
     }
-
-    // if (typeof style === "object") {
-    //     if(style.type != '' && style.value != '') {
-    //         let attr = row_elem.setAttribute(style.type, style.value)
-    //     } 
-    // }
     
     return row_elem
 }
@@ -23,8 +19,9 @@ function appendChild(parent, child) {
 
 class Layout {
 
-    constructor(container) {
-        this.container = container
+    constructor(container, generator) {
+        this.container = container;
+        this.generator = generator;
     }
 
     // Draw function creates the soduku layout. It 
@@ -53,7 +50,7 @@ class Layout {
             appendChild(this.container, row_cont)
             //create the cells inside the rows
             for(let c = 1; c <= COL_NO; c++) {
-                let cell_class_name = "cell";
+                let cell_class_name = "cell cell-text";
                 if (c == 1) {
                     //for the left most cells we need a thick left border
                     cell_class_name += " left-cell"
@@ -68,10 +65,18 @@ class Layout {
                 //create the cells with the styles
                 let cell = createElem('div', cell_attr)
                 //add the text inside the cell
-                let text = createElem('p', [{type: 'class', value: 'cell-text'}])
-                //text.innerHTML = Math.ceil(Math.random(9)*9)
+                //let text = createElem('p', [{type: 'class', value: 'cell-text'}])
+                let val = this.generator.getCellValue(r, c);
+                if (val) {
+                    cell.innerHTML = val
+                } else {
+                    //@todo: we need to make the empty cell white, but the folliwng code
+                    // somehow hides the border of the row-divider class
+                    //cell.classList.add('empty-cell')
+                }
+                
                 //append the text and the cell
-                appendChild(cell, text)
+                //appendChild(cell, text)
                 appendChild(row_cont, cell)
             }
         }
