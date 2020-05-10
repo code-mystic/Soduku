@@ -1,3 +1,50 @@
 body {
     background-color: lightgreen;
+    box-sizing: border-box;
+}
+
+.row {
+    /* border: 1px solid #333; */
+    margin: 0px;
+}
+
+.top_row {
+    border-top: 1px solid black;
+}
+
+.row_divider {
+    border-bottom: 2px solid black;
+}
+
+.cell {
+    border-left: 1px solid #999;
+    border-top: 1px solid #999;
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    padding: 5px;
+    margin: 0px;
+    text-align: center;
+    justify-content: center;
+}
+
+.left-cell {
+    border-left: 2px solid black;
+}
+
+.cell_right {
+    border-right: 2px solid black
+}
+
+.cell-text {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+#soduku-board {
+    margin-top: 80px;
+    margin-left: 80px;
+    position: absolute;
+    background-color: lightyellow;
+    padding: 5px;
 }
