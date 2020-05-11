@@ -32,6 +32,101 @@ class SodukuGenerator {
         this.matrix = [];
         this.VALUE_ARR = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     }
+
+    /* 
+     * getNumbersInRow returns all the numbers in a specifc row   
+    */
+    getNumbersInRow (row_no) {
+        let nums = [], col_cntr = 1;
+        while (col_cntr <= 9) {
+            let val = this.getCellValue(row_no, col_cntr)
+            if(Number.isInteger(val)) {
+                nums.push(val);
+            }
+            col_cntr++;
+        }
+        return nums;
+    }
+
+    /* 
+    * getNumbersInRow returns all the numbers in a specifc column   
+    */
+    getNumbersInColum(col_no) {
+        let nums = [], row_cntr = 1;
+        while (row_cntr <= 9) {
+            let val = this.getCellValue(row_cntr, col_no)
+            if(Number.isInteger(val)) {
+                nums.push(val);
+            }
+            row_cntr++;
+        }
+        return nums;
+    }
+
+    /* 
+    * getNumbersInSubMatrix returns all the numbers in a specifc sub-matrix   
+    */
+    getNumbersInSubMatrix(row_no, col_no) {
+        let nums = [];
+        let matrix_start_row, matrix_end_row, matrix_start_col, matrix_end_col;
+        if (row_no % 3 == 0) {
+            matrix_end_row = row_no;
+            matrix_start_row = matrix_end_row - 2
+        }else {
+            matrix_start_row = row_no - (row_no % 3) + 1
+            matrix_end_row = matrix_start_row + 2
+        }
+
+        if(col_no % 3 == 0) {
+            matrix_end_col = col_no
+            matrix_start_col = matrix_end_col - 2
+        } else {
+            matrix_start_col = col_no - (col_no % 3) + 1
+            matrix_end_col = matrix_start_col + 2
+        }
+
+        //get the values of this matrix
+        for(let row = matrix_start_row; row < matrix_end_row; row++) {
+            for(let col = matrix_start_col; col < matrix_end_col; col++) {
+                let val = this.getCellValue(row, col)
+                if(Number.isInteger(val)) {
+                    nums.push(val);
+                }
+            }
+        }
+
+        return nums;
+        
+    }
+
+
+    getCorrectNum(row_no, col_no) {
+        let row_nums = this.getNumbersInRow(row_no);
+        let col_nums = this.getNumbersInColum(col_no);
+        let sub_matrix_nums = this.getNumbersInSubMatrix(row_no, col_no)
+
+        let all_nums = row_nums.concat(col_nums).concat(sub_matrix_nums)
+        let unique_nums = [... new Set(all_nums)]
+
+        let avlbl_nums = this.VALUE_ARR.filter(num => {
+            return !unique_nums.includes(num)
+        })
+
+        avlbl_nums = suffle(avlbl_nums)
+        //debugger;
+        console.log(unique_nums, unique_nums)
+
+        /* @todo: We simply can not add numbers without checking how many
+        cells for that column (maybe row as well) for that cell and whether
+        in those empty cells we already have any strict requirement of any specifc 
+        number. This may imporve the solution a bit*/
+
+        let new_val = avlbl_nums.shift();
+        if(!Number.isInteger(new_val)) {
+            //debugger;
+        }
+        return new_val;
+    }
     
     fillDiagonalSubMatrix () {
         let row_base = 1, col_base = 1, counter = 1;
@@ -51,6 +146,18 @@ class SodukuGenerator {
         }
     }
 
+    populateCells () {
+        for(let r = 1; r <= 9; r++) {
+            for(let c = 1; c <= 9; c++) {
+                let val = this.matrix[r][c];
+                if(val === '') {
+                    let correctNum = this.getCorrectNum(r, c);
+                    this.matrix[r][c] = correctNum;
+                }
+            }
+        }
+    }
+
     generate () {
         for(let r = 1; r <= 9; r++) {
             this.matrix[r] = []
@@ -59,6 +166,7 @@ class SodukuGenerator {
             }
         }
         this.fillDiagonalSubMatrix()
+        this.populateCells()
     }
 
     getCellValue (row_no, col_nom) {

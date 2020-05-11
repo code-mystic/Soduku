@@ -66,14 +66,18 @@ class Layout {
                 let cell = createElem('div', cell_attr)
                 //add the text inside the cell
                 //let text = createElem('p', [{type: 'class', value: 'cell-text'}])
-                let val = this.generator.getCellValue(r, c);
-                if (val) {
-                    cell.innerHTML = val
-                } else {
-                    //@todo: we need to make the empty cell white, but the folliwng code
-                    // somehow hides the border of the row-divider class
-                    //cell.classList.add('empty-cell')
-                }
+                // let val = this.generator.getCellValue(r, c);
+                setTimeout(() => {
+                    let val = this.generator.getCellValue(r, c);
+                    if (val) {
+                        cell.innerHTML = val
+                    } else {
+                        //@todo: we need to make the empty cell white, but the folliwng code
+                        // somehow hides the border of the row-divider class
+                        //cell.classList.add('empty-cell')
+                    }
+                }, 1000)
+                
                 
                 //append the text and the cell
                 //appendChild(cell, text)
