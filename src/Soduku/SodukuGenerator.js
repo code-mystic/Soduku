@@ -31,6 +31,7 @@ class SodukuGenerator {
     constructor () {
         this.matrix = [];
         this.VALUE_ARR = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        this.BLANK_CELL_PLACEHOLDER = 0;
     }
 
     /* 
@@ -48,6 +49,19 @@ class SodukuGenerator {
         return nums;
     }
 
+    getRemianingNumbersInRow(row_no, row_nums=[]) {
+        let nums = row_nums, remainingNums = [];
+        //when no pre-catched row_nums has been passed
+        if(nums.length == 0 && Number.isInteger(row_no)) {
+            nums = this.getNumbersInRow(row_no)
+        }
+
+        remainingNums = this.VALUE_ARR.filter(num => {
+            return !nums.includes(num)
+        })
+        return remainingNums
+    }
+
     /* 
     * getNumbersInRow returns all the numbers in a specifc column   
     */
@@ -63,13 +77,23 @@ class SodukuGenerator {
         return nums;
     }
 
-    /* 
-    * getNumbersInSubMatrix returns all the numbers in a specifc sub-matrix   
-    */
-    getNumbersInSubMatrix(row_no, col_no) {
-        let nums = [];
+    getRemianingNumbersInColum(col_no, col_nums = []) {
+        let nums = col_nums, remainingNums =[];
+
+        if(nums.length == 0 && Number.isInteger(col_no)) {
+            nums = this.getNumbersInColum(col_no)
+        }
+        
+        remainingNums = this.VALUE_ARR.filter(num => {
+            return !nums.includes(num)
+        })
+        return remainingNums
+    }
+
+    getMatrixLimit (row_no, col_no) {
         let matrix_start_row, matrix_end_row, matrix_start_col, matrix_end_col;
-        if (row_no % 3 == 0) {
+
+        /*if (row_no % 3 == 0) {
             matrix_end_row = row_no;
             matrix_start_row = matrix_end_row - 2
         }else {
@@ -83,20 +107,117 @@ class SodukuGenerator {
         } else {
             matrix_start_col = col_no - (col_no % 3) + 1
             matrix_end_col = matrix_start_col + 2
+        }*/
+        matrix_end_row = Math.ceil(row_no / 3) * 3;
+        matrix_start_row = matrix_end_row - 2;
+        matrix_end_col = Math.ceil(col_no / 3) * 3;
+        matrix_start_col = matrix_end_col - 2;
+
+        return {
+            'm_s_r': matrix_start_row,
+            'm_e_r': matrix_end_row,
+            'm_s_c': matrix_start_col,
+            'm_e_c':matrix_end_col
         }
+    }
+
+    /* 
+    * getNumbersInSubMatrix returns all the numbers in a specifc sub-matrix   
+    */
+    getNumbersInSubMatrix(row_no, col_no, isFlat = true) {
+        let nums = [];
+        let matrix_start_row, matrix_end_row, matrix_start_col, matrix_end_col;
+        
+        let matrix_cords = this.getMatrixLimit(row_no, col_no);
+
+        matrix_start_row = matrix_cords.m_s_r;
+        matrix_end_row = matrix_cords.m_e_r;
+        matrix_start_col = matrix_cords.m_s_c;
+        matrix_end_col = matrix_cords.m_e_c;
 
         //get the values of this matrix
-        for(let row = matrix_start_row; row < matrix_end_row; row++) {
-            for(let col = matrix_start_col; col < matrix_end_col; col++) {
+        for(let row = matrix_start_row; row <= matrix_end_row; row++) {
+            nums[row] = [];
+            for(let col = matrix_start_col; col <= matrix_end_col; col++) {
                 let val = this.getCellValue(row, col)
                 if(Number.isInteger(val)) {
-                    nums.push(val);
+                    nums[row].push(val);
                 }
             }
         }
 
-        return nums;
+        return nums = isFlat ? nums.flat() : nums;
         
+    }
+
+    getRemianingNumbersInSubMatrix(row_no, col_no, sunMatrix_nums = []) {
+        let nums = sunMatrix_nums, remainingNums =[];
+
+        if(nums.length == 0 && Number.isInteger(col_no) && Number.isInteger(row_no)) {
+            nums = this.getNumbersInSubMatrix(row_no, col_no)
+        }
+        
+        remainingNums = this.VALUE_ARR.filter(num => {
+            return !nums.includes(num)
+        })
+        return remainingNums
+    }
+
+    /*
+     * Try to suffle previous numbers in this row to find a
+     * duitable number for this cell
+     * As we are backtracking only on the row, we need not to
+     * newly derive row numbers
+     */
+    backtrackOptimization (row_no, col_no, row_nums = [], col_nums = [], sub_matrix_nums =  []) {
+        /*
+        * 1. Which number(s) in this row are yet to be filled 
+        * 2. Which number(s) can be filled in this column
+        * 3. Which number(s) can be filled in this sub-matrix
+        */
+       
+        let remRowNums = this.getRemianingNumbersInRow(row_no);
+        let remColNums = this.getRemianingNumbersInColum(col_no);
+        
+        //case - 1: When the row has only one item left to fill
+        if(remRowNums.length == 1) {
+            debugger;
+            let numberLeftInRow = remRowNums[0]
+            //we can now traverse the row from the end to find the
+            //first availble no that we can place in this column
+            for(let i = col_no-2; i >= 0; i--) {
+                let num = row_nums[i]
+                //check whether this number can be placed in the 
+                //required column (col_num)
+                if (remColNums.includes(num)) {
+
+                    //We have to find that whether the sub-matrix has this
+                    //num other than it's own part of the row itself
+                    let remSubMatrxNum = this.getNumbersInSubMatrix(row_no, col_no, false)
+                    if(remSubMatrxNum.flat().includes(num) && !remSubMatrxNum[row_no].includes(num)) {
+                        // That means the num is in the matrix but not in the
+                        //part of the row that belongs to this matrix
+                        continue;
+                    }
+                    //yes it can be placed.
+                    //Now we need to check whether the remaining number in the
+                    //row (numberLeftInRow) can be swaped with the column whose
+                    //value we are trying to put
+                    let valsInTheTargetCol = this.getRemianingNumbersInColum(i)
+                    // @todo:: Possible optimization. This is only applicable if the 
+                    // sun-matrix got changed by traversing. 
+                    let valsInTheTargetMatrix = this.getRemianingNumbersInSubMatrix(row_no, i) 
+                    if(!valsInTheTargetCol.includes(numberLeftInRow) && 
+                        !valsInTheTargetMatrix.includes(numberLeftInRow)) {
+                        //YES WE CAN SWAP
+                        row_nums[i] =  numberLeftInRow;
+                        row_nums[col_no] = num
+                        break;
+                    }
+                }
+            }
+
+        }
     }
 
 
@@ -112,18 +233,27 @@ class SodukuGenerator {
             return !unique_nums.includes(num)
         })
 
+        //if we end up having no avilable numbers lets try to go
+        //back row wise and see which number in this row could 
+        //have been placed here
+        if(avlbl_nums.length == 0) {
+            this.backtrackOptimization(row_no, col_no, row_nums, col_nums, sub_matrix_nums)
+
+        }
+
         avlbl_nums = suffle(avlbl_nums)
         //debugger;
         console.log(unique_nums, unique_nums)
 
         /* @todo: We simply can not add numbers without checking how many
-        cells for that column (maybe row as well) for that cell and whether
+        empty cells for that column (maybe row as well) for that cell and whether
         in those empty cells we already have any strict requirement of any specifc 
         number. This may imporve the solution a bit*/
 
         let new_val = avlbl_nums.shift();
         if(!Number.isInteger(new_val)) {
             //debugger;
+            new_val = -1//this.BLANK_CELL_PLACEHOLDER
         }
         return new_val;
     }
@@ -150,7 +280,7 @@ class SodukuGenerator {
         for(let r = 1; r <= 9; r++) {
             for(let c = 1; c <= 9; c++) {
                 let val = this.matrix[r][c];
-                if(val === '') {
+                if(val === this.BLANK_CELL_PLACEHOLDER) {
                     let correctNum = this.getCorrectNum(r, c);
                     this.matrix[r][c] = correctNum;
                 }
@@ -162,7 +292,7 @@ class SodukuGenerator {
         for(let r = 1; r <= 9; r++) {
             this.matrix[r] = []
             for(let c = 1; c <= 9; c++) {
-                this.matrix[r][c] = '' //this.getCorrectNum(r, c)
+                this.matrix[r][c] = this.BLANK_CELL_PLACEHOLDER //this.getCorrectNum(r, c)
             }
         }
         this.fillDiagonalSubMatrix()
