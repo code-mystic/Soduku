@@ -31,13 +31,13 @@ class Layout {
     //
     // cell_values : The values which has to be plotted
     draw (cell_values = []) {
-        const ROW_NO = 9, COL_NO = 9;
-        for(let r = 1; r <= ROW_NO; r++) {
+        const ROW_NO = 8, COL_NO = 8;
+        for(let r = 0; r <= ROW_NO; r++) { //0 indexing
             let row_class_name = "row";
-            if (r == 1) {
+            if (r == 0) {
                 // for the top row we need a thick top border
                 row_class_name += " top_row"
-            } else if(r % 3 === 0) {
+            } else if((r+1) % 3 === 0) {
                 //for every third row we need a thick bottom border
                 row_class_name += " row_divider"
             }
@@ -49,12 +49,12 @@ class Layout {
             let row_cont = createElem('div', row_attrs)
             appendChild(this.container, row_cont)
             //create the cells inside the rows
-            for(let c = 1; c <= COL_NO; c++) {
+            for(let c = 0; c <= COL_NO; c++) {
                 let cell_class_name = "cell cell-text";
-                if (c == 1) {
+                if (c == 0) {
                     //for the left most cells we need a thick left border
                     cell_class_name += " left-cell"
-                } else if(c % 3 === 0) {
+                } else if((c+1) % 3 === 0) {
                     //for every third cell we need a thick right border
                     cell_class_name += " cell_right"
                 }

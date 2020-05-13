@@ -38,8 +38,8 @@ class SodukuGenerator {
      * getNumbersInRow returns all the numbers in a specifc row   
     */
     getNumbersInRow (row_no) {
-        let nums = [], col_cntr = 1;
-        while (col_cntr <= 9) {
+        let nums = [], col_cntr = 0;
+        while (col_cntr < 9) {
             let val = this.getCellValue(row_no, col_cntr)
             if(Number.isInteger(val)) {
                 nums.push(val);
@@ -66,8 +66,8 @@ class SodukuGenerator {
     * getNumbersInRow returns all the numbers in a specifc column   
     */
     getNumbersInColum(col_no) {
-        let nums = [], row_cntr = 1;
-        while (row_cntr <= 9) {
+        let nums = [], row_cntr = 0;
+        while (row_cntr < 9) {
             let val = this.getCellValue(row_cntr, col_no)
             if(Number.isInteger(val)) {
                 nums.push(val);
@@ -93,25 +93,10 @@ class SodukuGenerator {
     getMatrixLimit (row_no, col_no) {
         let matrix_start_row, matrix_end_row, matrix_start_col, matrix_end_col;
 
-        /*if (row_no % 3 == 0) {
-            matrix_end_row = row_no;
-            matrix_start_row = matrix_end_row - 2
-        }else {
-            matrix_start_row = row_no - (row_no % 3) + 1
-            matrix_end_row = matrix_start_row + 2
-        }
-
-        if(col_no % 3 == 0) {
-            matrix_end_col = col_no
-            matrix_start_col = matrix_end_col - 2
-        } else {
-            matrix_start_col = col_no - (col_no % 3) + 1
-            matrix_end_col = matrix_start_col + 2
-        }*/
-        matrix_end_row = Math.ceil(row_no / 3) * 3;
-        matrix_start_row = matrix_end_row - 2;
-        matrix_end_col = Math.ceil(col_no / 3) * 3;
-        matrix_start_col = matrix_end_col - 2;
+        matrix_start_row = Math.floor(row_no / 3) * 3
+        matrix_end_row = matrix_start_row + 2
+        matrix_start_col = Math.floor(col_no / 3) * 3
+        matrix_end_col = matrix_start_col + 2
 
         return {
             'm_s_r': matrix_start_row,
@@ -237,7 +222,7 @@ class SodukuGenerator {
         //back row wise and see which number in this row could 
         //have been placed here
         if(avlbl_nums.length == 0) {
-            this.backtrackOptimization(row_no, col_no, row_nums, col_nums, sub_matrix_nums)
+           // this.backtrackOptimization(row_no, col_no, row_nums, col_nums, sub_matrix_nums)
 
         }
 
@@ -259,7 +244,7 @@ class SodukuGenerator {
     }
     
     fillDiagonalSubMatrix () {
-        let row_base = 1, col_base = 1, counter = 1;
+        let row_base = 0, col_base = 0, counter = 1;
         // we now we have 3 diagonal matrix so we will do the process
         // 3 times for 3 differen 3 x 3 matrix
         while (counter <= 3) {
@@ -277,8 +262,8 @@ class SodukuGenerator {
     }
 
     populateCells () {
-        for(let r = 1; r <= 9; r++) {
-            for(let c = 1; c <= 9; c++) {
+        for(let r = 0; r < 9; r++) {
+            for(let c = 0; c < 9; c++) {
                 let val = this.matrix[r][c];
                 if(val === this.BLANK_CELL_PLACEHOLDER) {
                     let correctNum = this.getCorrectNum(r, c);
@@ -289,9 +274,9 @@ class SodukuGenerator {
     }
 
     generate () {
-        for(let r = 1; r <= 9; r++) {
+        for(let r = 0; r < 9; r++) {
             this.matrix[r] = []
-            for(let c = 1; c <= 9; c++) {
+            for(let c = 0; c < 9; c++) {
                 this.matrix[r][c] = this.BLANK_CELL_PLACEHOLDER //this.getCorrectNum(r, c)
             }
         }
@@ -300,7 +285,12 @@ class SodukuGenerator {
     }
 
     getCellValue (row_no, col_nom) {
-        return this.matrix[row_no][col_nom]
+        if(!this.matrix[row_no]) {
+            debugger;
+        }
+        
+        let num = this.matrix[row_no][col_nom]
+        return num
     }
 }
 
