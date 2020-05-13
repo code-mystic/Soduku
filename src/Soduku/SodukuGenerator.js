@@ -32,6 +32,7 @@ class SodukuGenerator {
         this.matrix = [];
         this.VALUE_ARR = [1, 2, 3, 4, 5, 6, 7, 8, 9];
         this.BLANK_CELL_PLACEHOLDER = 0;
+        this.max_try = 0;
     }
 
     /* 
@@ -163,14 +164,17 @@ class SodukuGenerator {
        
         let remRowNums = this.getRemianingNumbersInRow(row_no);
         let remColNums = this.getRemianingNumbersInColum(col_no);
+        let remSubMatrxNum, valsInTheTargetCol, valsInTheTargetMatrix, numberLeftInRow
+
+        let optNum = -1;
         
         //case - 1: When the row has only one item left to fill
-        if(remRowNums.length == 1) {
-            debugger;
+        if(false) {  //remRowNums.length == 1
+            //debugger;
             let numberLeftInRow = remRowNums[0]
             //we can now traverse the row from the end to find the
             //first availble no that we can place in this column
-            for(let i = col_no-2; i >= 0; i--) {
+            for(let i = col_no-1; i >= 0; i--) {
                 let num = row_nums[i]
                 //check whether this number can be placed in the 
                 //required column (col_num)
@@ -195,14 +199,67 @@ class SodukuGenerator {
                     if(!valsInTheTargetCol.includes(numberLeftInRow) && 
                         !valsInTheTargetMatrix.includes(numberLeftInRow)) {
                         //YES WE CAN SWAP
-                        row_nums[i] =  numberLeftInRow;
-                        row_nums[col_no] = num
+                        //row_nums[i] =  numberLeftInRow;
+                        this.matrix[row_no][i] = numberLeftInRow
+                        optNum = num
                         break;
                     }
                 }
-            }
+            } 
+        } else {
+            //debugger;
+            for(let i = col_no-1; i >= 0; i--) {
+                let num = row_nums[i]
+                //check whether this number can be placed in the 
+                //required column (col_num)
+                if (remColNums.includes(num)) {
 
+                    //We have to find that whether the sub-matrix has this
+                    //num other than it's own part of the row itself
+                    remSubMatrxNum = this.getNumbersInSubMatrix(row_no, col_no, false)
+                    if(remSubMatrxNum.flat().includes(num) && !remSubMatrxNum[row_no].includes(num)) {
+                        // That means the num is in the matrix but not in the
+                        //part of the row that belongs to this matrix
+                        continue;
+                    }
+                    //yes it can be placed.
+                    //Now we need to check whether the remaining number in the
+                    //row (numberLeftInRow) can be swaped with the column whose
+                    //value we are trying to put
+                    valsInTheTargetCol = this.getRemianingNumbersInColum(i)
+                    // @todo:: Possible optimization. This is only applicable if the 
+                    // sun-matrix got changed by traversing. 
+                    valsInTheTargetMatrix = this.getRemianingNumbersInSubMatrix(row_no, i) 
+
+
+                    for(let x = 0; x < remRowNums.length; x++) {
+                        numberLeftInRow = remRowNums[x]
+                        if(!valsInTheTargetCol.includes(numberLeftInRow) && 
+                              !valsInTheTargetMatrix.includes(numberLeftInRow)) {
+                            //YES WE CAN SWAP
+                            //row_nums[i] =  numberLeftInRow;
+                            this.matrix[row_no][i] = numberLeftInRow
+                            optNum = num
+                            break;
+                        }
+                    }
+
+                    //if we have swapped and found the number lets break
+                    if(optNum != -1) {
+                        break;
+                    }
+
+
+                    
+                }
+            }
         }
+
+        if(optNum == -1) {
+            debugger;
+        }
+
+        return optNum;
     }
 
 
@@ -221,24 +278,17 @@ class SodukuGenerator {
         //if we end up having no avilable numbers lets try to go
         //back row wise and see which number in this row could 
         //have been placed here
+        let new_val = -1
         if(avlbl_nums.length == 0) {
-           // this.backtrackOptimization(row_no, col_no, row_nums, col_nums, sub_matrix_nums)
-
+            new_val = this.backtrackOptimization(row_no, col_no, row_nums, col_nums, sub_matrix_nums)
+        } else {
+            avlbl_nums = suffle(avlbl_nums)
+            new_val = avlbl_nums.shift();
         }
 
-        avlbl_nums = suffle(avlbl_nums)
-        //debugger;
-        console.log(unique_nums, unique_nums)
-
-        /* @todo: We simply can not add numbers without checking how many
-        empty cells for that column (maybe row as well) for that cell and whether
-        in those empty cells we already have any strict requirement of any specifc 
-        number. This may imporve the solution a bit*/
-
-        let new_val = avlbl_nums.shift();
-        if(!Number.isInteger(new_val)) {
+        if(new_val == -1) {
             //debugger;
-            new_val = -1//this.BLANK_CELL_PLACEHOLDER
+            //this.BLANK_CELL_PLACEHOLDER
         }
         return new_val;
     }
@@ -262,18 +312,42 @@ class SodukuGenerator {
     }
 
     populateCells () {
+        let noSolution = false
         for(let r = 0; r < 9; r++) {
             for(let c = 0; c < 9; c++) {
                 let val = this.matrix[r][c];
                 if(val === this.BLANK_CELL_PLACEHOLDER) {
                     let correctNum = this.getCorrectNum(r, c);
+                    if(correctNum == -1) {
+                        noSolution = true;
+                        break
+                    }
                     this.matrix[r][c] = correctNum;
                 }
             }
+            if(noSolution) {
+                break
+            }
+        }
+
+        if(noSolution) {
+            this.max_try ++
+            console.log(this.max_try+ " Attempting again . . .")
+            this.generate()
+            //if(this.max_try > 0) {
+            //    setTimeout(() => {
+            //        this.generate()
+            //    }, 10)
+            //}
+            //else{
+            //    alert(`Sorry! We could not generate even after ${this.max_try} attempts`)
+           // }
+
         }
     }
 
     generate () {
+        this.matrix = [];
         for(let r = 0; r < 9; r++) {
             this.matrix[r] = []
             for(let c = 0; c < 9; c++) {
