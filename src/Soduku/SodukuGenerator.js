@@ -28,11 +28,12 @@ function suffle(arr) {
 
 class SodukuGenerator {
 
-    constructor () {
+    constructor (callback) {
         this.matrix = [];
         this.VALUE_ARR = [1, 2, 3, 4, 5, 6, 7, 8, 9];
         this.BLANK_CELL_PLACEHOLDER = 0;
         this.max_try = 0;
+        this.cb = callback;
     }
 
     /* 
@@ -256,7 +257,7 @@ class SodukuGenerator {
         }
 
         if(optNum == -1) {
-            debugger;
+            //debugger;
         }
 
         return optNum;
@@ -343,6 +344,8 @@ class SodukuGenerator {
             //    alert(`Sorry! We could not generate even after ${this.max_try} attempts`)
            // }
 
+        } else {
+            this.cb();
         }
     }
 
@@ -360,7 +363,7 @@ class SodukuGenerator {
 
     getCellValue (row_no, col_nom) {
         if(!this.matrix[row_no]) {
-            debugger;
+           // debugger;
         }
         
         let num = this.matrix[row_no][col_nom]
