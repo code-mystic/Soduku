@@ -26,14 +26,15 @@ function suffle(arr) {
     return copyArr
 }
 
+let attempt = 1;
+
 class SodukuGenerator {
 
-    constructor (callback) {
+    constructor () {
         this.matrix = [];
         this.VALUE_ARR = [1, 2, 3, 4, 5, 6, 7, 8, 9];
         this.BLANK_CELL_PLACEHOLDER = 0;
         this.max_try = 0;
-        this.cb = callback;
     }
 
     /* 
@@ -294,71 +295,134 @@ class SodukuGenerator {
         return new_val;
     }
     
-    fillDiagonalSubMatrix () {
+    /*
+     * Takes a matrix and fill its diagonal submatrix(s) with 
+     * unique numbers from 1-9
+     * 
+     */
+    fillDiagonalSubMatrix (matrixToPopulate, valuesToPopulate) {
+        let matrix = matrixToPopulate;
+        if(!matrix) {
+            return
+        }
         let row_base = 0, col_base = 0, counter = 1;
         // we now we have 3 diagonal matrix so we will do the process
         // 3 times for 3 differen 3 x 3 matrix
         while (counter <= 3) {
-            let num_arr = suffle([...this.VALUE_ARR])
+            let num_arr = suffle([...valuesToPopulate])
             for(let row = row_base; row < (row_base+3); row++) {
                 for(let col = col_base; col < (col_base+3); col++) {
                     let val = num_arr.shift()
-                    this.matrix[row][col] = val
+                    matrix[row][col] = val
                 }
             }
             row_base += 3;
             col_base += 3;
             counter++
         }
+
+        return matrix;
     }
 
-    populateCells () {
-        let noSolution = false
+    populateRemainingCells (sourceMatrix) {
+        //make a copy of the sourceMatrix
+        let matrix = [...sourceMatrix]
+        let numFound = true // we expect in most of the cases we will found it
         for(let r = 0; r < 9; r++) {
             for(let c = 0; c < 9; c++) {
                 let val = this.matrix[r][c];
-                if(val === this.BLANK_CELL_PLACEHOLDER) {
+                //if the cell does not have any valid value
+                if(!this.VALUE_ARR.includes(val)) {
                     let correctNum = this.getCorrectNum(r, c);
-                    if(correctNum == -1) {
-                        noSolution = true;
+                    if(!this.VALUE_ARR.includes(correctNum)) {
+                        console.log("terminating ..."+ correctNum)
+                        //if correctNum is not an acceptable value 
+                        // we have failed to get a correct number
+                        numFound = false;
+                        //empty the current matrix
+                        matrix = []
                         break
                     }
                     this.matrix[r][c] = correctNum;
                 }
             }
-            if(noSolution) {
+            //break the outer loop as well
+            if(!numFound) {
                 break
             }
         }
 
-        if(noSolution) {
-            this.max_try ++
-            console.log(this.max_try+ " Attempting again . . .")
-            this.generate()
-            //if(this.max_try > 0) {
-            //    setTimeout(() => {
-            //        this.generate()
-            //    }, 10)
-            //}
-            //else{
-            //    alert(`Sorry! We could not generate even after ${this.max_try} attempts`)
-           // }
+        //if for any cells we could not find a suitable number we return an empty 
+        //matrix
+        return matrix
 
-        } else {
-            this.cb();
-        }
+        // if(numFound) {
+        //     this.max_try ++
+        //     console.log(this.max_try+ " Attempting again . . .")
+        //     this.generate()
+        //     //if(this.max_try > 0) {
+        //     //    setTimeout(() => {
+        //     //        this.generate()
+        //     //    }, 10)
+        //     //}
+        //     //else{
+        //     //    alert(`Sorry! We could not generate even after ${this.max_try} attempts`)
+        //    // }
+
+        // } else {
+        //     this.cb();
+        // }
     }
 
-    generate () {
-        this.matrix = [];
-        for(let r = 0; r < 9; r++) {
-            this.matrix[r] = []
-            for(let c = 0; c < 9; c++) {
-                this.matrix[r][c] = this.BLANK_CELL_PLACEHOLDER //this.getCorrectNum(r, c)
+    /*
+     * Creates a matrix of number (defaults to 9) abd fill with 
+     * placeholder value .And returns it
+     * Default matrix will be of length 9 x 9 with value 0
+     */
+    createMatrix (matrixLength, value) {
+        let matrix = [];
+        let placeholder_val = Number.isInteger(value) ? value : this.BLANK_CELL_PLACEHOLDER;
+        let length = Number.isInteger(matrixLength) ? matrixLength : 9;
+
+        for(let r = 0; r < length; r++) {
+            matrix[r] = []
+            for(let c = 0; c < length; c++) {
+                matrix[r][c] = placeholder_val
             }
         }
-        this.fillDiagonalSubMatrix()
-        this.populateCells()
+        return matrix;
+    }
+
+    generate (callback) {
+        this.matrix = this.createMatrix();
+        
+        this.matrix = this.fillDiagonalSubMatrix(this.matrix, this.VALUE_ARR)
+        
+        let context = this
+        debugger;
+        const prom1 = new Promise((resolve, reject) => {
+            console.log("PROMISE INVOKED!!")
+           let matrix = context.populateRemainingCells(context.matrix)
+
+            if(matrix.length > 0) {
+                resolve(matrix)
+            }else {
+                reject(new Error("Could not generate board"))
+            }
+        })
+
+        prom1.then(matrix => {
+            callback(matrix)
+        })
+        .catch(err => {
+            
+            console.log(attempt, err.message)
+            if (attempt <= 1000) {
+                context.generate()
+                attempt++
+            }
+            
+        })
     }
 
     getCellValue (row_no, col_nom) {
