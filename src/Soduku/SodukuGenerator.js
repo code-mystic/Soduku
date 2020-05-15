@@ -40,10 +40,10 @@ class SodukuGenerator {
     /* 
      * getNumbersInRow returns all the numbers in a specifc row   
     */
-    getNumbersInRow (row_no) {
+    getNumbersInRow (sourceMatrix, row_no) {
         let nums = [], col_cntr = 0;
         while (col_cntr < 9) {
-            let val = this.getCellValue(row_no, col_cntr)
+            let val = this.getCellValue(sourceMatrix, row_no, col_cntr)
             if(Number.isInteger(val)) {
                 nums.push(val);
             }
@@ -68,10 +68,10 @@ class SodukuGenerator {
     /* 
     * getNumbersInRow returns all the numbers in a specifc column   
     */
-    getNumbersInColum(col_no) {
+    getNumbersInColum(sourceMatrix, col_no) {
         let nums = [], row_cntr = 0;
         while (row_cntr < 9) {
-            let val = this.getCellValue(row_cntr, col_no)
+            let val = this.getCellValue(sourceMatrix, row_cntr, col_no)
             if(Number.isInteger(val)) {
                 nums.push(val);
             }
@@ -112,7 +112,7 @@ class SodukuGenerator {
     /* 
     * getNumbersInSubMatrix returns all the numbers in a specifc sub-matrix   
     */
-    getNumbersInSubMatrix(row_no, col_no, isFlat = true) {
+    getNumbersInSubMatrix(sourceMatrix, row_no, col_no, isFlat = true) {
         let nums = [];
         let matrix_start_row, matrix_end_row, matrix_start_col, matrix_end_col;
         
@@ -122,12 +122,13 @@ class SodukuGenerator {
         matrix_end_row = matrix_cords.m_e_r;
         matrix_start_col = matrix_cords.m_s_c;
         matrix_end_col = matrix_cords.m_e_c;
-
+        debugger;
+        console.log(matrix_start_row, matrix_end_row, matrix_start_col, matrix_end_col)
         //get the values of this matrix
         for(let row = matrix_start_row; row <= matrix_end_row; row++) {
             nums[row] = [];
             for(let col = matrix_start_col; col <= matrix_end_col; col++) {
-                let val = this.getCellValue(row, col)
+                let val = this.getCellValue(sourceMatrix, row, col)
                 if(Number.isInteger(val)) {
                     nums[row].push(val);
                 }
@@ -265,10 +266,10 @@ class SodukuGenerator {
     }
 
 
-    getCorrectNum(row_no, col_no) {
-        let row_nums = this.getNumbersInRow(row_no);
-        let col_nums = this.getNumbersInColum(col_no);
-        let sub_matrix_nums = this.getNumbersInSubMatrix(row_no, col_no)
+    getCorrectNum(sourceMatrix, row_no, col_no) {
+        let row_nums = this.getNumbersInRow(sourceMatrix, row_no);
+        let col_nums = this.getNumbersInColum(sourceMatrix, col_no);
+        let sub_matrix_nums = this.getNumbersInSubMatrix(sourceMatrix, row_no, col_no)
 
         let all_nums = row_nums.concat(col_nums).concat(sub_matrix_nums)
         let unique_nums = [... new Set(all_nums)]
@@ -282,17 +283,50 @@ class SodukuGenerator {
         //have been placed here
         let new_val = -1
         if(avlbl_nums.length == 0) {
-            new_val = this.backtrackOptimization(row_no, col_no, row_nums, col_nums, sub_matrix_nums)
+           // new_val = this.backtrackOptimization(row_no, col_no, row_nums, col_nums, sub_matrix_nums)
         } else {
             avlbl_nums = suffle(avlbl_nums)
             new_val = avlbl_nums.shift();
         }
 
         if(new_val == -1) {
-            //debugger;
+            debugger;
             //this.BLANK_CELL_PLACEHOLDER
         }
         return new_val;
+    }
+
+    populateRemainingCells (sourceMatrix) {
+        //make a copy of the sourceMatrix
+        let matrix = [...sourceMatrix]
+        let numFound = true // we expect in most of the cases we will found it
+        for(let r = 0; r < 9; r++) {
+            for(let c = 0; c < 9; c++) {
+                let val = this.matrix[r][c];
+                //if the cell does not have any valid value
+                if(!this.VALUE_ARR.includes(val)) {
+                    let correctNum = this.getCorrectNum(matrix, r, c);
+                    if(!this.VALUE_ARR.includes(correctNum)) {
+                        console.log("terminating ..."+ correctNum)
+                        //if correctNum is not an acceptable value 
+                        // we have failed to get a correct number
+                        numFound = false;
+                        //empty the current matrix
+                        matrix = []
+                        break
+                    }
+                    this.matrix[r][c] = correctNum;
+                }
+            }
+            //break the outer loop as well
+            if(!numFound) {
+                break
+            }
+        }
+
+        //if for any cells we could not find a suitable number we return an empty 
+        //matrix
+        return matrix
     }
     
     /*
@@ -324,56 +358,6 @@ class SodukuGenerator {
         return matrix;
     }
 
-    populateRemainingCells (sourceMatrix) {
-        //make a copy of the sourceMatrix
-        let matrix = [...sourceMatrix]
-        let numFound = true // we expect in most of the cases we will found it
-        for(let r = 0; r < 9; r++) {
-            for(let c = 0; c < 9; c++) {
-                let val = this.matrix[r][c];
-                //if the cell does not have any valid value
-                if(!this.VALUE_ARR.includes(val)) {
-                    let correctNum = this.getCorrectNum(r, c);
-                    if(!this.VALUE_ARR.includes(correctNum)) {
-                        console.log("terminating ..."+ correctNum)
-                        //if correctNum is not an acceptable value 
-                        // we have failed to get a correct number
-                        numFound = false;
-                        //empty the current matrix
-                        matrix = []
-                        break
-                    }
-                    this.matrix[r][c] = correctNum;
-                }
-            }
-            //break the outer loop as well
-            if(!numFound) {
-                break
-            }
-        }
-
-        //if for any cells we could not find a suitable number we return an empty 
-        //matrix
-        return matrix
-
-        // if(numFound) {
-        //     this.max_try ++
-        //     console.log(this.max_try+ " Attempting again . . .")
-        //     this.generate()
-        //     //if(this.max_try > 0) {
-        //     //    setTimeout(() => {
-        //     //        this.generate()
-        //     //    }, 10)
-        //     //}
-        //     //else{
-        //     //    alert(`Sorry! We could not generate even after ${this.max_try} attempts`)
-        //    // }
-
-        // } else {
-        //     this.cb();
-        // }
-    }
-
     /*
      * Creates a matrix of number (defaults to 9) abd fill with 
      * placeholder value .And returns it
@@ -399,7 +383,7 @@ class SodukuGenerator {
         this.matrix = this.fillDiagonalSubMatrix(this.matrix, this.VALUE_ARR)
         
         let context = this
-        debugger;
+        
         const prom1 = new Promise((resolve, reject) => {
             console.log("PROMISE INVOKED!!")
            let matrix = context.populateRemainingCells(context.matrix)
@@ -425,12 +409,12 @@ class SodukuGenerator {
         })
     }
 
-    getCellValue (row_no, col_nom) {
-        if(!this.matrix[row_no]) {
+    getCellValue (sourceMatrix, row_no, col_nom) {
+        if(!sourceMatrix[row_no]) {
            // debugger;
         }
         
-        let num = this.matrix[row_no][col_nom]
+        let num = sourceMatrix[row_no][col_nom]
         return num
     }
 }

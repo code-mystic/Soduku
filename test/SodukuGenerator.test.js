@@ -173,25 +173,99 @@ describe("Generate diagonal Sub-matrix", function() {
   })
 })
 
-/*
-var obj = getMatrixLimit(0, 0)
-console.log('0 , 2, 0, 2'+' -> '+ obj.m_s_r+', '+obj.m_e_r+', '+ obj.m_s_c+', '+ obj.m_e_c)
-var obj = getMatrixLimit(1, 1)
-console.log('0 , 2, 0, 2'+' -> '+ obj.m_s_r+', '+obj.m_e_r+', '+ obj.m_s_c+', '+ obj.m_e_c)
-var obj = getMatrixLimit(2, 2)
-console.log('0 , 2, 0, 2'+' -> '+ obj.m_s_r+', '+obj.m_e_r+', '+ obj.m_s_c+', '+ obj.m_e_c)
-var obj = getMatrixLimit(3, 3)
-console.log('3 , 5, 3, 5'+' -> '+ obj.m_s_r+', '+obj.m_e_r+', '+ obj.m_s_c+', '+ obj.m_e_c)
-var obj = getMatrixLimit(4, 4)
-console.log('3 , 5, 3, 5'+' -> '+ obj.m_s_r+', '+obj.m_e_r+', '+ obj.m_s_c+', '+ obj.m_e_c)
-var obj = getMatrixLimit(5, 5)
-console.log('3 , 5, 3, 5'+' -> '+ obj.m_s_r+', '+obj.m_e_r+', '+ obj.m_s_c+', '+ obj.m_e_c)
-var obj = getMatrixLimit(6, 6)
-console.log('6 , 8, 6, 8'+' -> '+ obj.m_s_r+', '+obj.m_e_r+', '+ obj.m_s_c+', '+ obj.m_e_c)
-var obj = getMatrixLimit(7, 7)
-console.log('6 , 8, 6, 8'+' -> '+ obj.m_s_r+', '+obj.m_e_r+', '+ obj.m_s_c+', '+ obj.m_e_c)
-var obj = getMatrixLimit(8, 8)
-console.log('6 , 8, 6, 8'+' -> '+ obj.m_s_r+', '+obj.m_e_r+', '+ obj.m_s_c+', '+ obj.m_e_c)
+describe("getMatrixLimit () : ", function() {
+  let len = 9;
+  for(let r = 0; r < len; r++) {
+    for(let c = 0; c < len; c++) {
+      let cord = soduGen.getMatrixLimit(r, c)
+      if(r < 3) {
+        if(c < 3) {
+          it(`row ${r} - column ${c}`, () => expect(cord).to.eql({'m_s_r': 0, 'm_e_r': 2, 'm_s_c': 0, 'm_e_c': 2}))
+        } else if (c < 6) {
+          it(`row ${r} - column ${c}`, () => expect(cord).to.eql({'m_s_r': 0, 'm_e_r': 2, 'm_s_c': 3, 'm_e_c': 5}))
+        } else if (c < 9) {
+          it(`row ${r} - column ${c}`, () => expect(cord).to.eql({'m_s_r': 0, 'm_e_r': 2, 'm_s_c': 6, 'm_e_c': 8}))
+        }
+      } else if (r < 6) {
+        if(c < 3) {
+          it(`row ${r} - column ${c}`, () => expect(cord).to.eql({'m_s_r': 3, 'm_e_r': 5, 'm_s_c': 0, 'm_e_c': 2}))
+        } else if (c < 6) {
+          it(`row ${r} - column ${c}`, () => expect(cord).to.eql({'m_s_r': 3, 'm_e_r': 5, 'm_s_c': 3, 'm_e_c': 5}))
+        } else if (c < 9) {
+          it(`row ${r} - column ${c}`, () => expect(cord).to.eql({'m_s_r': 3, 'm_e_r': 5, 'm_s_c': 6, 'm_e_c': 8}))
+        }
+      } else if (r < 9) {
+        if(c < 3) {
+          it(`row ${r} - column ${c}`, () => expect(cord).to.eql({'m_s_r': 6, 'm_e_r': 8, 'm_s_c': 0, 'm_e_c': 2}))
+        } else if (c < 6) {
+          it(`row ${r} - column ${c}`, () => expect(cord).to.eql({'m_s_r': 6, 'm_e_r': 8, 'm_s_c': 3, 'm_e_c': 5}))
+        } else if (c < 9) {
+          it(`row ${r} - column ${c}`, () => expect(cord).to.eql({'m_s_r': 6, 'm_e_r': 8, 'm_s_c': 6, 'm_e_c': 8}))
+        }
+      }
+    }
+  }
+})
 
-*/
+describe("getNumbersInRow() ", function() {
+  let len = solutionMatrix1.length
+  for(let r = 0; r < len; r++) {
+    let nums = solutionMatrix1[r]
+    let numsToCheck = soduGen.getNumbersInRow(solutionMatrix1, r)
+    it(`row ${r} - [${nums}] -> [${numsToCheck}] `, () => expect(numsToCheck).to.eql(nums))
+  }
+})
 
+describe("getNumbersInColumn() ", function() {
+  let len = solutionMatrix1.length, nums = []
+  for(let c = 0; c < len; c++) {
+    let nums = []
+    for(let r = 0; r < len; r ++) {
+      nums.push(solutionMatrix1[r][c])
+    }
+    let numsToCheck = soduGen.getNumbersInColum(solutionMatrix1, c)
+    it(`column ${c} - [${nums}] -> [${numsToCheck}] `, () => expect(numsToCheck).to.eql(nums))
+  }
+})
+
+describe("getNumbersInSubMatrix() ", function() {
+  let len = solutionMatrix1.length;
+  for(let r = 0; r < len; r++) {
+    for(let c = 0; c < len; c ++) {
+      if(r < 3) {
+        if(c < 3) {
+          let nums = soduGen.getNumbersInSubMatrix(solutionMatrix1, r, c, true)
+          it(`row ${r} - column ${c}`, () => expect(nums).to.eql([8,6,4,3,2,5,9,7,1]))
+        } else if (c < 6) {
+          let nums = soduGen.getNumbersInSubMatrix(solutionMatrix1, r, c, true)
+          it(`row ${r} - column ${c}`, () => expect(nums).to.eql([3,7,1, 8,4,9, 2,6,5]))
+        } else if (c < 9) {
+          let nums = soduGen.getNumbersInSubMatrix(solutionMatrix1, r, c, true)
+          it(`row ${r} - column ${c}`, () => expect(nums).to.eql([2,5,9, 7,6,1, 8,4,3]))
+        }
+      } else if (r < 6) {
+        if(c < 3) {
+          let nums = soduGen.getNumbersInSubMatrix(solutionMatrix1, r, c, true)
+          it(`row ${r} - column ${c}`, () => expect(nums).to.eql([4,3,6, 1,9,8, 2,5,7]))
+        } else if (c < 6) {
+          let nums = soduGen.getNumbersInSubMatrix(solutionMatrix1, r, c, true)
+          it(`row ${r} - column ${c}`, () => expect(nums).to.eql([1,9,2, 6,5,7, 4,8,3]))
+        } else if (c < 9) {
+          let nums = soduGen.getNumbersInSubMatrix(solutionMatrix1, r, c, true)
+          it(`row ${r} - column ${c}`, () => expect(nums).to.eql([5,8,7, 4,3,2, 9,1,6]))
+        }
+      } else if (r < 9) {
+        if(c < 3) {
+          let nums = soduGen.getNumbersInSubMatrix(solutionMatrix1, r, c, true)
+          it(`row ${r} - column ${c}`, () => expect(nums).to.eql([6,8,9, 7,1,3, 5,4,2]))
+        } else if (c < 6) {
+          let nums = soduGen.getNumbersInSubMatrix(solutionMatrix1, r, c, true)
+          it(`row ${r} - column ${c}`, () => expect(nums).to.eql([7,3,4, 5,2,8, 9,1,6]))
+        } else if (c < 9) {
+          let nums = soduGen.getNumbersInSubMatrix(solutionMatrix1, r, c, true)
+          it(`row ${r} - column ${c}`, () => expect(nums).to.eql([1,2,5, 6,9,4, 3,7,8]))
+        }
+      }
+    }
+  }
+})
