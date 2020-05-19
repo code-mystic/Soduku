@@ -215,8 +215,8 @@ class SodukuGenerator {
      * @param {number} length : the length of the matrix
      * @param {number} value : the placeholder value to fill the matrix
      */
-    createMatrix(length, value) {
-        return Array.from({length: 9}, () => Array(9).fill(value))
+    createMatrix(length = 9, value = 0) {
+        return Array.from({length: length}, () => Array(length).fill(value))
 
     }
 
