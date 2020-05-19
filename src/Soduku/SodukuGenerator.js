@@ -1,20 +1,24 @@
-/* The engine to generate a soduku Puzzle
-   1. The basic algorith used here is that the 3 x 3 diagonal 
-   matrix is independent of each other. We should generate 
-   those first
-   2. Then we should randomly choose a number between 1-9
-      and check whether we can place that
-   3. If we can not place that then we go back to the step - 2
-      and repeat
-   4. Post completion of all numbers we randomly remove some 
-      of the numbers to create the puzzle
-*/
+/**
+ * the alogorithm to generate the soduku is as follows
+ * 1. It creates a blank 9x9 matrix object and a similar random 
+ *    9x9 matrix object with prefilled values (suffled)
+ * 2. It tries to fill one number first in the entire matrix
+ *    successfully following the Soduku rules
+ * 3. It implements a chcek if by filling the number in a 
+ *    particular row we can not fill the next row with the
+ *    same number we go back (backtrack)
+ * 4. If it can be placed it completes the entire matrix 
+ *    and move to the next number
+ * 5. Since the matrix is limited 9x9; time or space complexity
+ *    has not been considered.
+ *  
+ */
 
 function getRandomNum (limit = 9) {
     return Math.floor(Math.random() * Math.floor(limit));
 }
 
-function suffle(arr) {
+function shuffle(arr) {
     let copyArr = [...arr]
     let len = copyArr.length
     for(let i = 0; i < len; i++) {
@@ -26,21 +30,55 @@ function suffle(arr) {
     return copyArr
 }
 
-let attempt = 1;
 
 class SodukuGenerator {
+    
 
     constructor () {
+        //The final matrix object
         this.matrix = [];
-        this.VALUE_ARR = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        this.BLANK_CELL_PLACEHOLDER = 0;
-        this.max_try = 0;
+        //the random matrix
+        this.mapMatrix = []
     }
 
-    /* 
-     * getNumbersInRow returns all the numbers in a specifc row   
-    */
-    getNumbersInRow (sourceMatrix, row_no) {
+    //the starting function to generate
+    generate(callback) {
+        let success = true
+        this.matrix = this.createMatrix(9, 0)
+        this.randomMatrix = this.createMatrix(9, 0)
+            .map(row => row.map((v, i) => i))
+            .map(row => shuffle(row))
+
+        //next lets start assigining values to the matrix
+        //we will try and put values from 1-9
+        for(let i = 1; i<= 9; i++) {
+            while(!this.placeValue(i)) {
+                debugger
+                success = false
+                break;
+            }
+            if(!success) {
+                break;
+            }
+        }
+        console.log(this.matrix)
+
+        if(success) {
+            callback()
+        } else {
+            this.generate(callback)
+        }
+        
+        
+    }
+
+
+    placeValue(num) {
+        //we should always start placing value from the first row
+        return this.placeValueInRow(num, 0)
+    }
+
+    getRowValues (sourceMatrix, row_no) {
         let nums = [], col_cntr = 0;
         while (col_cntr < 9) {
             let val = this.getCellValue(sourceMatrix, row_no, col_cntr)
@@ -52,25 +90,9 @@ class SodukuGenerator {
         return nums;
     }
 
-    getRemianingNumbersInRow(row_no, row_nums=[]) {
-        let nums = row_nums, remainingNums = [];
-        //when no pre-catched row_nums has been passed
-        if(nums.length == 0 && Number.isInteger(row_no)) {
-            nums = this.getNumbersInRow(row_no)
-        }
-
-        remainingNums = this.VALUE_ARR.filter(num => {
-            return !nums.includes(num)
-        })
-        return remainingNums
-    }
-
-    /* 
-    * getNumbersInRow returns all the numbers in a specifc column   
-    */
-    getNumbersInColum(sourceMatrix, col_no) {
+    getColValues(sourceMatrix, col_no) {
         let nums = [], row_cntr = 0;
-        while (row_cntr < 9) {
+        while (row_cntr < sourceMatrix.length) {
             let val = this.getCellValue(sourceMatrix, row_cntr, col_no)
             if(Number.isInteger(val)) {
                 nums.push(val);
@@ -80,20 +102,7 @@ class SodukuGenerator {
         return nums;
     }
 
-    getRemianingNumbersInColum(col_no, col_nums = []) {
-        let nums = col_nums, remainingNums =[];
-
-        if(nums.length == 0 && Number.isInteger(col_no)) {
-            nums = this.getNumbersInColum(col_no)
-        }
-        
-        remainingNums = this.VALUE_ARR.filter(num => {
-            return !nums.includes(num)
-        })
-        return remainingNums
-    }
-
-    getMatrixLimit (row_no, col_no) {
+    getBoxLimit (row_no, col_no) {
         let matrix_start_row, matrix_end_row, matrix_start_col, matrix_end_col;
 
         matrix_start_row = Math.floor(row_no / 3) * 3
@@ -109,21 +118,17 @@ class SodukuGenerator {
         }
     }
 
-    /* 
-    * getNumbersInSubMatrix returns all the numbers in a specifc sub-matrix   
-    */
-    getNumbersInSubMatrix(sourceMatrix, row_no, col_no, isFlat = true) {
+    getBoxValues(sourceMatrix, row_no, col_no, isFlat = true) {
         let nums = [];
         let matrix_start_row, matrix_end_row, matrix_start_col, matrix_end_col;
         
-        let matrix_cords = this.getMatrixLimit(row_no, col_no);
+        let matrix_cords = this.getBoxLimit(row_no, col_no);
 
         matrix_start_row = matrix_cords.m_s_r;
         matrix_end_row = matrix_cords.m_e_r;
         matrix_start_col = matrix_cords.m_s_c;
         matrix_end_col = matrix_cords.m_e_c;
-        debugger;
-        console.log(matrix_start_row, matrix_end_row, matrix_start_col, matrix_end_col)
+        
         //get the values of this matrix
         for(let row = matrix_start_row; row <= matrix_end_row; row++) {
             nums[row] = [];
@@ -139,284 +144,85 @@ class SodukuGenerator {
         
     }
 
-    getRemianingNumbersInSubMatrix(row_no, col_no, sunMatrix_nums = []) {
-        let nums = sunMatrix_nums, remainingNums =[];
 
-        if(nums.length == 0 && Number.isInteger(col_no) && Number.isInteger(row_no)) {
-            nums = this.getNumbersInSubMatrix(row_no, col_no)
-        }
-        
-        remainingNums = this.VALUE_ARR.filter(num => {
-            return !nums.includes(num)
-        })
-        return remainingNums
+    checkRules(rowIndex, colIndex, val) {
+        //get the existig row values
+        let rowValues = this.getRowValues(this.matrix, rowIndex)
+        //get the existing col values
+        let colValues = this.getColValues(this.matrix, colIndex)
+        //get the existing sub-matrix / box values
+        let boxValues = this.getBoxValues(this.matrix, rowIndex, colIndex)
+
+        //if any of these values have the required number included
+        //we can not place it
+        let allValues = rowValues.concat(colValues.concat(boxValues))
+        //remove repetition
+        let uniqueValues = [...new Set(allValues)]
+
+        return uniqueValues.includes(val)
     }
 
-    /*
-     * Try to suffle previous numbers in this row to find a
-     * duitable number for this cell
-     * As we are backtracking only on the row, we need not to
-     * newly derive row numbers
-     */
-    backtrackOptimization (row_no, col_no, row_nums = [], col_nums = [], sub_matrix_nums =  []) {
-        /*
-        * 1. Which number(s) in this row are yet to be filled 
-        * 2. Which number(s) can be filled in this column
-        * 3. Which number(s) can be filled in this sub-matrix
-        */
-       
-        let remRowNums = this.getRemianingNumbersInRow(row_no);
-        let remColNums = this.getRemianingNumbersInColum(col_no);
-        let remSubMatrxNum, valsInTheTargetCol, valsInTheTargetMatrix, numberLeftInRow
+    placeValueInRow(num, rowIndex) {
+        let success = false
+        let valToPlace = num
+        let row = this.matrix[rowIndex]
+        let rndIndices = this.randomMatrix[rowIndex]
+        let colIndex
 
-        let optNum = -1;
-        
-        //case - 1: When the row has only one item left to fill
-        if(false) {  //remRowNums.length == 1
-            //debugger;
-            let numberLeftInRow = remRowNums[0]
-            //we can now traverse the row from the end to find the
-            //first availble no that we can place in this column
-            for(let i = col_no-1; i >= 0; i--) {
-                let num = row_nums[i]
-                //check whether this number can be placed in the 
-                //required column (col_num)
-                if (remColNums.includes(num)) {
+        for(let i = 0; i< 9; i++) {
+            colIndex = rndIndices[i]
+            //if the cell already have a value other than 0
+            //we should go the the next
+            let val = row[colIndex]
+            if(val) {
+                continue
+            }
 
-                    //We have to find that whether the sub-matrix has this
-                    //num other than it's own part of the row itself
-                    let remSubMatrxNum = this.getNumbersInSubMatrix(row_no, col_no, false)
-                    if(remSubMatrxNum.flat().includes(num) && !remSubMatrxNum[row_no].includes(num)) {
-                        // That means the num is in the matrix but not in the
-                        //part of the row that belongs to this matrix
-                        continue;
-                    }
-                    //yes it can be placed.
-                    //Now we need to check whether the remaining number in the
-                    //row (numberLeftInRow) can be swaped with the column whose
-                    //value we are trying to put
-                    let valsInTheTargetCol = this.getRemianingNumbersInColum(i)
-                    // @todo:: Possible optimization. This is only applicable if the 
-                    // sun-matrix got changed by traversing. 
-                    let valsInTheTargetMatrix = this.getRemianingNumbersInSubMatrix(row_no, i) 
-                    if(!valsInTheTargetCol.includes(numberLeftInRow) && 
-                        !valsInTheTargetMatrix.includes(numberLeftInRow)) {
-                        //YES WE CAN SWAP
-                        //row_nums[i] =  numberLeftInRow;
-                        this.matrix[row_no][i] = numberLeftInRow
-                        optNum = num
-                        break;
-                    }
-                }
-            } 
-        } else {
-            //debugger;
-            for(let i = col_no-1; i >= 0; i--) {
-                let num = row_nums[i]
-                //check whether this number can be placed in the 
-                //required column (col_num)
-                if (remColNums.includes(num)) {
+            //next we need to check whether we can place this 
+            //value in the cell following Soduku rule
+            if(this.checkRules(rowIndex, colIndex, valToPlace)) {
+                continue
+            }
 
-                    //We have to find that whether the sub-matrix has this
-                    //num other than it's own part of the row itself
-                    remSubMatrxNum = this.getNumbersInSubMatrix(row_no, col_no, false)
-                    if(remSubMatrxNum.flat().includes(num) && !remSubMatrxNum[row_no].includes(num)) {
-                        // That means the num is in the matrix but not in the
-                        //part of the row that belongs to this matrix
-                        continue;
-                    }
-                    //yes it can be placed.
-                    //Now we need to check whether the remaining number in the
-                    //row (numberLeftInRow) can be swaped with the column whose
-                    //value we are trying to put
-                    valsInTheTargetCol = this.getRemianingNumbersInColum(i)
-                    // @todo:: Possible optimization. This is only applicable if the 
-                    // sun-matrix got changed by traversing. 
-                    valsInTheTargetMatrix = this.getRemianingNumbersInSubMatrix(row_no, i) 
+            //we can place the value
+            row[colIndex] = valToPlace
 
-
-                    for(let x = 0; x < remRowNums.length; x++) {
-                        numberLeftInRow = remRowNums[x]
-                        if(!valsInTheTargetCol.includes(numberLeftInRow) && 
-                              !valsInTheTargetMatrix.includes(numberLeftInRow)) {
-                            //YES WE CAN SWAP
-                            //row_nums[i] =  numberLeftInRow;
-                            this.matrix[row_no][i] = numberLeftInRow
-                            optNum = num
-                            break;
-                        }
-                    }
-
-                    //if we have swapped and found the number lets break
-                    if(optNum != -1) {
-                        break;
-                    }
-
-
-                    
+            //now here we need to check whether we can place
+            //the required value in the next row. This is how
+            //through recursion we complete one number for the
+            //entire matrix. If this number can not be placed
+            //in the next row, we backtrack one step
+            if( (rowIndex+1) < 9) {
+                if(!this.placeValueInRow(num, rowIndex+1)) {
+                    //means we could not place it in the next row
+                    // We backtrack
+                    row[colIndex] = 0
+                    continue
                 }
             }
+            success = true
         }
 
-        if(optNum == -1) {
-            //debugger;
-        }
-
-        return optNum;
+        return success
     }
 
 
-    getCorrectNum(sourceMatrix, row_no, col_no) {
-        let row_nums = this.getNumbersInRow(sourceMatrix, row_no);
-        let col_nums = this.getNumbersInColum(sourceMatrix, col_no);
-        let sub_matrix_nums = this.getNumbersInSubMatrix(sourceMatrix, row_no, col_no)
 
-        let all_nums = row_nums.concat(col_nums).concat(sub_matrix_nums)
-        let unique_nums = [... new Set(all_nums)]
-
-        let avlbl_nums = this.VALUE_ARR.filter(num => {
-            return !unique_nums.includes(num)
-        })
-
-        //if we end up having no avilable numbers lets try to go
-        //back row wise and see which number in this row could 
-        //have been placed here
-        let new_val = -1
-        if(avlbl_nums.length == 0) {
-           // new_val = this.backtrackOptimization(row_no, col_no, row_nums, col_nums, sub_matrix_nums)
-        } else {
-            avlbl_nums = suffle(avlbl_nums)
-            new_val = avlbl_nums.shift();
-        }
-
-        if(new_val == -1) {
-            debugger;
-            //this.BLANK_CELL_PLACEHOLDER
-        }
-        return new_val;
-    }
-
-    populateRemainingCells (sourceMatrix) {
-        //make a copy of the sourceMatrix
-        let matrix = [...sourceMatrix]
-        let numFound = true // we expect in most of the cases we will found it
-        for(let r = 0; r < 9; r++) {
-            for(let c = 0; c < 9; c++) {
-                let val = this.matrix[r][c];
-                //if the cell does not have any valid value
-                if(!this.VALUE_ARR.includes(val)) {
-                    let correctNum = this.getCorrectNum(matrix, r, c);
-                    if(!this.VALUE_ARR.includes(correctNum)) {
-                        console.log("terminating ..."+ correctNum)
-                        //if correctNum is not an acceptable value 
-                        // we have failed to get a correct number
-                        numFound = false;
-                        //empty the current matrix
-                        matrix = []
-                        break
-                    }
-                    this.matrix[r][c] = correctNum;
-                }
-            }
-            //break the outer loop as well
-            if(!numFound) {
-                break
-            }
-        }
-
-        //if for any cells we could not find a suitable number we return an empty 
-        //matrix
-        return matrix
-    }
-    
-    /*
-     * Takes a matrix and fill its diagonal submatrix(s) with 
-     * unique numbers from 1-9
+    /**
+     * Simply creates a nxn matrix, fills it with the value 
+     * and returns it
      * 
+     * @param {number} length : the length of the matrix
+     * @param {number} value : the placeholder value to fill the matrix
      */
-    fillDiagonalSubMatrix (matrixToPopulate, valuesToPopulate) {
-        let matrix = matrixToPopulate;
-        if(!matrix) {
-            return
-        }
-        let row_base = 0, col_base = 0, counter = 1;
-        // we now we have 3 diagonal matrix so we will do the process
-        // 3 times for 3 differen 3 x 3 matrix
-        while (counter <= 3) {
-            let num_arr = suffle([...valuesToPopulate])
-            for(let row = row_base; row < (row_base+3); row++) {
-                for(let col = col_base; col < (col_base+3); col++) {
-                    let val = num_arr.shift()
-                    matrix[row][col] = val
-                }
-            }
-            row_base += 3;
-            col_base += 3;
-            counter++
-        }
+    createMatrix(length, value) {
+        return Array.from({length: 9}, () => Array(9).fill(value))
 
-        return matrix;
-    }
-
-    /*
-     * Creates a matrix of number (defaults to 9) abd fill with 
-     * placeholder value .And returns it
-     * Default matrix will be of length 9 x 9 with value 0
-     */
-    createMatrix (matrixLength, value) {
-        let matrix = [];
-        let placeholder_val = Number.isInteger(value) ? value : this.BLANK_CELL_PLACEHOLDER;
-        let length = Number.isInteger(matrixLength) ? matrixLength : 9;
-
-        for(let r = 0; r < length; r++) {
-            matrix[r] = []
-            for(let c = 0; c < length; c++) {
-                matrix[r][c] = placeholder_val
-            }
-        }
-        return matrix;
-    }
-
-    generate (callback) {
-        this.matrix = this.createMatrix();
-        
-        this.matrix = this.fillDiagonalSubMatrix(this.matrix, this.VALUE_ARR)
-        
-        let context = this
-        
-        const prom1 = new Promise((resolve, reject) => {
-            console.log("PROMISE INVOKED!!")
-           let matrix = context.populateRemainingCells(context.matrix)
-
-            if(matrix.length > 0) {
-                resolve(matrix)
-            }else {
-                reject(new Error("Could not generate board"))
-            }
-        })
-
-        prom1.then(matrix => {
-            callback(matrix)
-        })
-        .catch(err => {
-            
-            console.log(attempt, err.message)
-            if (attempt <= 1000) {
-                context.generate()
-                attempt++
-            }
-            
-        })
     }
 
     getCellValue (sourceMatrix, row_no, col_nom) {
-        if(!sourceMatrix[row_no]) {
-           // debugger;
-        }
-        
-        let num = sourceMatrix[row_no][col_nom]
-        return num
+        return sourceMatrix[row_no][col_nom]
     }
 }
 
-export default SodukuGenerator;
+export default SodukuGenerator

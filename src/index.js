@@ -4,7 +4,7 @@ import SodukuGenerator from './Soduku/SodukuGenerator.js'
 import './styles/main.css'
 
 const SODUKU_BOARD = document.getElementById("soduku-board");
-let layout = "ola!";
+let layout;
 
 var sodukuGen = new SodukuGenerator()
 sodukuGen.generate(() => {
@@ -12,5 +12,4 @@ sodukuGen.generate(() => {
     layout = new Layout(SODUKU_BOARD, sodukuGen)
     layout.draw()
 })
-
 

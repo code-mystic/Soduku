@@ -68,13 +68,14 @@ class Layout {
                 //let text = createElem('p', [{type: 'class', value: 'cell-text'}])
                 // let val = this.generator.getCellValue(r, c);
                 setTimeout(() => {
-                    let val = this.generator.getCellValue(r, c);
+                    let val = this.generator.getCellValue(this.generator.matrix, r, c);
                     if (val) {
                         cell.innerHTML = val
                     } else {
                         //@todo: we need to make the empty cell white, but the folliwng code
                         // somehow hides the border of the row-divider class
                         //cell.classList.add('empty-cell')
+                        debugger;
                     }
                 }, 1000)
                 
