@@ -27,7 +27,7 @@
     "babel-loader": "^8.1.0",
     "chai": "^4.2.0",
     "css-loader": "^3.5.3",
-    "mocha": "^7.1.2",
+    "mocha": "^10.2.0",
     "mocha-loader": "^5.0.0",
     "mocha-webpack": "^1.1.0",
     "style-loader": "^1.2.1",
